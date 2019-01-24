@@ -1,4 +1,12 @@
 from mnist import Mnist
+import logging
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+handler = logging.StreamHandler()
+handler.setLevel(logging.DEBUG)
+formatter = logging.Formatter('[%(asctime)s] [%(name)s] [%(levelname)s] [%(message)s]')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 
 def one_hot(label, total=10):
@@ -8,12 +16,11 @@ def one_hot(label, total=10):
     one_hot_label[one_hot_label == 1] = 0.99
 
 
+logger.debug("START")
+mnist = Mnist("train-images.idx3-ubyte", "train-labels.idx1-ubyte",
+               "t10k-images.idx3-ubyte",  "t10k-labels.idx1-ubyte")
 
-
-
-#mnist = Mnist("train-images.idx3-ubyte", "train-labels.idx1-ubyte")
-
-epochs = 3
+epochs = 1
 
 from network import Network
 
@@ -21,3 +28,12 @@ nn = Network(28 * 28, 10)
 nn.addLayer(100)
 
 nn.status()
+
+#for epoch in range(epochs):
+#	print("epoch {}".format(epoch))
+#	for img in range(len(mnist.trainImages)):
+#		nn.train(mnist.trainImages[i], one_hot(mnist.trainLabels[i]))
+#    corrects, wrongs = nn.evaluate(mnist.trainImages, mnist.trainLabels)
+#    print("{0.2f}".format(corrects / (corrects + wrongs)))
+#    corrects, wrongs = nn.evaluate(mnist.testImages, mnist.testLabels)
+#    print("{0.2f}".format(corrects / (corrects + wrongs)))

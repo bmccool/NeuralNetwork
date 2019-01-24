@@ -1,4 +1,12 @@
 import sys
+import logging
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+handler = logging.StreamHandler()
+handler.setLevel(logging.DEBUG)
+formatter = logging.Formatter('[%(asctime)s] [%(name)s] [%(levelname)s] [%(message)s]')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 class Network:
     """Generic Nerual Network Class"""
     # layer is an array containing all layers - input, hidden and output
@@ -10,7 +18,6 @@ class Network:
         self.layer.append([0] * numInputs)
         #number of neurons in the prevous layer is
         numWeights = len(self.layer[len(self.layer) - 1])
-        print(numWeights)
         self.layer.append([Neuron(numWeights) for count in range(numOutputs)])
 
     def addLayer(self, numNeurons):
@@ -28,13 +35,13 @@ class Network:
         self.layer[len(self.layer) - 1] = [Neuron(numWeights) for count in range(len(self.layer[len(self.layer) - 1]))]
 
     def status(self):
-        maxRows = max([len(layer) for layer in self.layer])
-        for row in range(maxRows):
-            for col in range(len(self.layer)):
-                if(len(self.layer[col])) > row:
-                    sys.stdout.write(str(col).rjust(4, " "))
-                    #sys.stdout.write(str(self.layer[col][row]).rjust(5, " "))
-            sys.stdout.write("\n")
+        for index, layer in enumerate(self.layer):
+            logger.info("Layer {} has {} nodes".format(index, len(layer)))
+            if index > 0:
+                for node in layer:
+                    if len(node.weights) != len(self.layer[index - 1]):
+                        logger.info("Error! Node in layer {} has {} weights instead \
+                               of {}".format(index, len(node.weights), len(self.layer[index - 1])))
 
 class Neuron:
     """Generic Neuron Class used by Neural Networks"""
