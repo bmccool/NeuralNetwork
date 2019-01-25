@@ -4,7 +4,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 handler = logging.StreamHandler()
 handler.setLevel(logging.DEBUG)
-formatter = logging.Formatter('[%(asctime)s] [%(name)s] [%(levelname)s] [%(message)s]')
+formatter = logging.Formatter('[%(asctime)s] [%(filename)s:%(lineno)s] [%(funcName)s] [%(levelname)s] [%(message)s]')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 class Network:
@@ -19,6 +19,13 @@ class Network:
         #number of neurons in the prevous layer is
         numWeights = len(self.layer[len(self.layer) - 1])
         self.layer.append([Neuron(numWeights) for count in range(numOutputs)])
+
+    def train(self, image, label):
+        logger.info("Training...")
+
+    def evaluate(self, images, labels):
+        logger.info("Evaluating...")
+        return 0, len(images)
 
     def addLayer(self, numNeurons):
         """
