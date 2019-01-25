@@ -37,6 +37,7 @@ class Network:
             logger.debug("Weight matrix added, size {} by {}".format(shape[i + 1], shape[i]))
     
     def train(self, input, target):
+        # Folloing example on https://www.python-course.eu/neural_network_mnist.php
         inputVector = np.array(input, ndmin=2)
         targetVector = np.array(target, ndmin=2)
 
@@ -45,23 +46,22 @@ class Network:
         outputVector2 = np.dot(outputHidden, self.weights[1])
         outputNetwork = sigmoid(outputVector2)
 
-        # Output error is easy, we know the output and the desired output
-        outputErrors = targetVector - outputNetwork
-
+        # Backpropagate Output Layer
+        # We need the error multiplied by the derivative of the activation function
+        # the derivative of the sigmoix(x) is x * (1 - x)
+        # so we want (target - output) output * (1 - output)
+        outputErrors = (targetVector - outputNetwork) * outputNetwork * (1.0 - outputNetwork)
         # Update the weights
-        # TODO how does this work? 
-        # The rest of this is taken from https://www.python-course.eu/neural_network_mnist.php
-        tmp = outputErrors * outputNetwork * (1.0 - outputNetwork)
-        tmp = self.learningRate * np.dot(tmp.T, outputHidden)
-        self.weights[1] += tmp.T
+        # We want weights = weights + learning rate * Error * Input
+        self.weights[1] += self.learningRate * np.dot(outputErrors.T, outputHidden).T
 
-        # Calculate the hidden layer error
-        hiddenErrors = np.dot(self.weights[1], outputErrors.T)
-
+        # Backpropagate Hidden Layer
+        # Error for a hidden layer node is the weighted sum of all the connected nodes,
+        # together with the derivative of the activation function
+        # I.e. Error(Node[j]) = SUM[1-10](weights[1][j][1-10] * outputError[1-10]) * outputHidden * (1 - outputHidden)
+        hiddenErrors = np.dot(self.weights[1], outputErrors.T).T * outputHidden * (1.0 - outputHidden)
         # Update the weights
-        tmp = hiddenErrors.T * outputHidden * (1.0 - outputHidden)
-        tmp = self.learningRate * np.dot(tmp.T, inputVector)
-        self.weights[0] += tmp.T
+        self.weights[0] += self.learningRate * np.dot(hiddenErrors.T, inputVector).T
 
 
     def evaluate(self, images, labels):
