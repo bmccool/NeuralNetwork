@@ -10,11 +10,17 @@ logger.addHandler(handler)
 
 
 def one_hot(label, total=10):
+    logger.debug("Label: {}".format(label))
     import numpy as np
     lr = np.arange(total)
-    one_hot_label = (lr == label).astype(np.int)
+    logger.debug(lr)
+    one_hot_label = (lr == label).astype(np.float)
+    logger.debug(one_hot_label)
     one_hot_label[one_hot_label == 0] = 0.01
+    logger.debug(one_hot_label)    
     one_hot_label[one_hot_label == 1] = 0.99
+    logger.debug(one_hot_label)    
+    return one_hot_label
 
 
 logger.debug("START")
@@ -25,10 +31,7 @@ epochs = 1
 
 from network import Network
 
-nn = Network(28 * 28, 10)
-nn.addLayer(100)
-
-nn.status()
+nn = Network([28 * 28, 100, 10])
 
 for epoch in range(epochs):
     logger.info("epoch {}".format(epoch))
