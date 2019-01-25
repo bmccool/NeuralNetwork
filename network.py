@@ -37,7 +37,6 @@ class Network:
             logger.debug("Weight matrix added, size {} by {}".format(shape[i + 1], shape[i]))
     
     def train(self, input, target):
-        logger.info("Training - Target: {}".format(target))
         inputVector = np.array(input, ndmin=2)
         targetVector = np.array(target, ndmin=2)
 
@@ -52,21 +51,31 @@ class Network:
         # Update the weights
         #TODO how does this work? ... Here through the rest of self.train()
         tmp = outputErrors * outputNetwork * (1.0 - outputNetwork)
-        tmp = self.learningRate * np.dot(tmp, outputHidden.T)
-        self.weights[1] += tmp
+        tmp = self.learningRate * np.dot(tmp.T, outputHidden)
+        self.weights[1] += tmp.T
 
         # Calculate the hidden layer error
-        hiddenErrors = np.dot(self.weights[1].T, outputErrors)
+        hiddenErrors = np.dot(self.weights[1], outputErrors.T)
 
         # Update the weights
-        tmp = hiddenErrors * outputHidden * (1.0 - outputHidden)
-        tmp = self.learningRate * np.dot(tmp, inputVector.T)
-        self.weights[0] += tmp
+        tmp = hiddenErrors.T * outputHidden * (1.0 - outputHidden)
+        tmp = self.learningRate * np.dot(tmp.T, inputVector)
+        self.weights[0] += tmp.T
 
 
     def evaluate(self, images, labels):
         logger.info("Evaluating...")
-        return 0, len(images)
+        corrects, wrongs = 0, 0
+        for i in range(len(images)):
+            if (i % 1000) == 1:
+                logger.info("Evaluating {} / {}".format(corrects, corrects + wrongs))
+            res = self.run(images[i])
+            resMax = res.argmax()
+            if resMax == labels[i]:
+                corrects += 1
+            else:
+                wrongs += 1
+        return corrects, wrongs
 
     def run(self, input):
         """ Run an image through the network """
