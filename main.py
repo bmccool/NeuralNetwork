@@ -32,14 +32,13 @@ nn = Network([28 * 28, 100, 10], 0.2)
 
 for epoch in range(epochs):
     logger.info("epoch {}".format(epoch))
+    nn.start_training()
     for i in range(len(mnist.trainImages)):
-        old_weights = nn.weights.copy()
         nn.train(mnist.trainImages[i], one_hot(mnist.trainLabels[i]))
-        new_weights = nn.weights.copy()
-        if (np.array(old_weights) == np.array(new_weights)):
-            logger.warning("NOTHING CHANGED!")
-        if (i % 1000 ) == 1:
-            logger.info("Training {} / {}".format(i, len(mnist.trainImages)))
+        if (i % 100 ) == 1:
+            logger.info("Trained {} / {}".format(i+1, len(mnist.trainImages)))
+            nn.end_training()
+            nn.start_training()
     corrects, wrongs = nn.evaluate(mnist.trainImages, mnist.trainLabels)
     logger.info("{:.2f}% Correct in training data".format((corrects / (corrects + wrongs)) * 100))
     corrects, wrongs = nn.evaluate(mnist.testImages, mnist.testLabels)
