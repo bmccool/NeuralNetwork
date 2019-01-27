@@ -24,11 +24,13 @@ logger.debug("START")
 mnist = Mnist("train-images.idx3-ubyte", "train-labels.idx1-ubyte",
                "t10k-images.idx3-ubyte",  "t10k-labels.idx1-ubyte")
 
-epochs = 1 
+epochs = 2
+testPercent = []
+trainingPercent = []
 
 from network import Network
 
-nn = Network([28 * 28, 100, 10], 0.2)
+nn = Network([28 * 28, 100, 10], 1.0)
 
 for epoch in range(epochs):
     logger.info("epoch {}".format(epoch))
@@ -41,11 +43,10 @@ for epoch in range(epochs):
             nn.start_training()
     corrects, wrongs = nn.evaluate(mnist.trainImages, mnist.trainLabels)
     logger.info("{:.2f}% Correct in training data".format((corrects / (corrects + wrongs)) * 100))
+    trainingPercent.append((corrects / (corrects + wrongs)) * 100)
     corrects, wrongs = nn.evaluate(mnist.testImages, mnist.testLabels)
     logger.info("{:.2f}% Correct in test data".format((corrects / (corrects + wrongs)) * 100))
+    testPercent.append((corrects / (corrects + wrongs)) * 100)
 
-#logger.debug("Weights")
-#for each in nn.weights:
-#    logger.debug("Next Weight")
-#    for i in each:
-#        logger.debug(i)
+logger.info("Training Percent: {}".format(trainingPercent))
+logger.info("Test Percent: {}".format(testPercent))

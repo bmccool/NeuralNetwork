@@ -25,51 +25,62 @@ def d_squishify(x):
 
 class Network:
     def __init__(self, shape, learningRate=0.1):
+        self.shape = shape
         logger.info("Creating network")
         self.learningRate = learningRate
         logger.debug("LearningRate: {}".format(self.learningRate))
-        self.layers = []
-        self.biases = []
+        #for index, layer in enumerate(shape):
+        #    self.layers.append([0] * layer)
+        #    logger.debug("Layer has {} nodes".format(layer))
+        #    if (index != 0):
+        #        # We only want weights for the layers other than the input layers
+        #        # TODO Is the bias index appropriate?? biases[0] applies to layer 1?
+        #        self.biases.append([0] * layer)
+        #        logger.debug("Added {} weights for layer {}".format(layer, index))
+        #    # Create weights for every layer but the input layer
+        #    # Each set of weights needs to be a matrix of size [in x out]
+        #    # Thay way we can use dot product of a layer and weights to get
+        #    # to the next layer.
+        #    if(i != len(shape) - 1):
+        #        self.weights.append([[0] * shape[i + 1] for each in range(shape[i])])
+        #        logger.debug("Weight matrix added, size {} by {}".format(shape[i + 1], shape[i]))
+        self.layers, self.weights, self.biases = self.create_matricies(shape)
+        logger.debug("Total layers: {}".format(len(self.layers)))
+        logger.debug("Total bias sets: {}".format(len(self.biases)))
+        
+    def create_matricies(self, shape):
+        layers = []
+        biases = []
+        weights = []
         for index, layer in enumerate(shape):
-            self.layers.append([0] * layer)
-            logger.debug("Layer has {} nodes".format(layer))
+            layers.append([0] * layer)
+            #logger.debug("Layer has {} nodes".format(layer))
             if (index != 0):
                 # We only want weights for the layers other than the input layers
                 # TODO Is the bias index appropriate?? biases[0] applies to layer 1?
-                self.biases.append([0] * layer)
-                logger.debug("Added {} weights for layer {}".format(layer, index))
-        logger.debug("Total layers: {}".format(len(self.layers)))
-        logger.debug("Total bias sets: {}".format(len(self.biases)))
+                biases.append([0] * layer)
+                #logger.debug("Added {} biases for layer {}".format(layer, index))
+            # Create weights for every layer but the input layer
+            # Each set of weights needs to be a matrix of size [in x out]
+            # Thay way we can use dot product of a layer and weights to get
+            # to the next layer.
+            if(index != len(shape) - 1):
+                weights.append([[0] * shape[index + 1] for each in range(shape[index])])
+                #logger.debug("Weight matrix added, size {} by {}".format(shape[index + 1], shape[index]))
+        return layers, weights, biases
 
-        self.weights = []
-        # Create weights for every layer but the input layer
-        # Each set of weights needs to be a matrix of size [in x out]
-        # Thay way we can use dot product of a layer and weights to get
-        # to the next layer.
-        for i, layer in enumerate(shape):
-            if(i == len(shape) - 1):
-                # We are done
-                break
-            self.weights.append([[0] * shape[i + 1] for each in range(shape[i])])
-            logger.debug("Weight matrix added, size {} by {}".format(shape[i + 1], shape[i]))
             
     def start_training(self):
         # During training, we accumulate the changes that each training sample
         #   wants to make to the weights and balances.  When we end the training
         #   session, we apply the #TODO (average of these?) changes all at once
-        self.del_weights = self.weights.copy()
-        self.del_biases = self.biases.copy()
-        self.del_weights = np.array(self.del_weights) * 0
-        logger.warn("WEIGHTS:")
-        logger.warn(self.del_weights[0])
-        # TODO left here
-        # Why on earth can I not zero the del_weights matrix?  It just keeps disappearing.
-        self.del_biases = np.dot(np.array(self.del_biases), 0)
         self.training_samples = 0
+        layers, self.del_weights, self.del_biases = self.create_matricies(self.shape)
+        self.del_weights = np.array(self.del_weights)
+        self.del_biases = np.array(self.del_biases)
         logger.info("Starting training session")
         
     def accumulate_changes(self, del_weights, del_biases):
-        logger.warn(len(del_weights))
         self.del_weights += del_weights
         # TODO biases not used yet.... self.del_biases += del_biases
         self.training_samples += 1
@@ -77,8 +88,12 @@ class Network:
     def end_training(self):
         # When a training set is complete, we want to apply the changes of
         #   each training sample to the weights and biases of the network
+        self.del_weights = np.array(self.del_weights) / self.training_samples
+        # For some reason, biases is list instead of array, can't operate list and int
+        #self.del_biases = np.array(self.del_biases) / self.training_samples
         self.weights += self.del_weights
-        self.biases += self.del_biases
+        #self.biases += self.del_biases
+        
             
     def train(self, input, target):
         # Folloing example on https://www.python-course.eu/neural_network_mnist.php
