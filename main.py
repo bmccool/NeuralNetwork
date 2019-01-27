@@ -30,7 +30,7 @@ trainingPercent = []
 
 from network import Network
 
-nn = Network([28 * 28, 100, 10], 1.0)
+nn = Network([28 * 28, 100, 10], 0.2)
 
 for epoch in range(epochs):
     logger.info("epoch {}".format(epoch))
