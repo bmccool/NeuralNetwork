@@ -3,8 +3,8 @@ import logging
 import numpy as np
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-#handler = logging.StreamHandler()
-handler = logging.FileHandler("log.txt")
+handler = logging.StreamHandler()
+#handler = logging.FileHandler("log.txt")
 handler.setLevel(logging.DEBUG)
 formatter = logging.Formatter('[%(asctime)s] [%(filename)s:%(lineno)s] [%(funcName)s] [%(levelname)s] [%(message)s]')
 handler.setFormatter(formatter)
@@ -200,10 +200,9 @@ class Network:
         logger.info("Evaluating...")
         corrects, wrongs = 0, 0
         for i in range(len(images)):
-            if (i % 1000) == 1:
-                logger.info("Evaluating {} / {}".format(corrects, corrects + wrongs))
+            if (i % (len(images) / 10)) == 0:
+                logger.info("Evaluating {} / {}".format(i, len(images)))
             res = self.run(images[i])
-            logger.debug("Label: {}, RES: {}".format(labels[i], res))
             resMax = res.argmax()
             if resMax == labels[i]:
                 corrects += 1
