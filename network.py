@@ -196,40 +196,6 @@ class Network:
         
         self.accumulate_changes(del_weights, 0)
         
-        
-        
-        
-#    def trainIndividual(self, input, target):
-#        #TODO Assumes a lot about network size
-#        # https://machinelearningmastery.com/implement-backpropagation-algorithm-scratch-python/
-#        inputVector = np.array(input, ndmin=2)
-#        targetVector = np.array(target, ndmin=2)
-#
-#        outputVector1 = np.dot(inputVector, self.weights[0])
-#        outputHidden = sigmoid(outputVector1)
-#        outputVector2 = np.dot(outputHidden, self.weights[1])
-#        outputNetwork = sigmoid(outputVector2)
-#        
-#        # Backpropagate Output Layer
-#        # We need the error multiplied by the derivative of the activation function
-#        # the derivative of the sigmoix(x) is x * (1 - x)
-#        # so we want (target - output) output * (1 - output)       
-#        for i in reversed(range(len(self.layers))):
-#            layer = self.layers[i]
-#            errors = list()
-#            if i != len(self.layers) - 1:
-#                for j in range(len(layer)):
-#                    error = 0.0
-#                    for neuron, value in enumerate(self.layers[i + 1]):
-#                        error += (weights[1][j][neuron] * (target[neuron] - outputNetwork[neuron]) * d_sigmoid(outputNetwork[neuron]))
-#                    errors.append(error)
-#            else:
-#                for j in range(len(layer)):
-#                    neuron = layer[j]
-#                    errors.append(target[])
-#                    #FINISH
-
-
     def evaluate(self, images, labels):
         logger.info("Evaluating...")
         corrects, wrongs = 0, 0
