@@ -141,7 +141,30 @@ class Network:
             output_errors = np.dot(self.weights[layer_index-1].T, 
                                    output_errors)
             layer_index -= 1
-        
+ 
+    def train_one(self, input, target):
+
+        inputVector = np.array(input, ndmin=2).T
+        targetVector = np.array(target, ndmin=2).T
+
+        # Feed forward
+        hidden_vector = np.dot(self.weights[0], inputVector)
+        hidden_output = squishify(hidden_vector)
+        output_vector = np.dot(self.weights[1], hidden_output)
+        output_network = squishify(output_vector)
+
+        # Backpropagate Output Layer
+        output_errors = targetVector - output_network
+        tmp = output_errors * output_network * (1.0 - output_network)
+        tmp = np.dot(tmp, hidden_output.T)
+        self.weights[1] += self.learningRate * tmp
+
+        # Backpropagate Hidden Layer
+        output_errors = np.dot(self.weights[1].T, output_errors)
+        tmp = output_errors * hidden_output * (1.0 - hidden_output)
+        tmp = np.dot(tmp, inputVector.T)
+        self.weights[0] += self.learningRate * tmp
+
             
     def train(self, input, target):
         # Folloing example on https://www.python-course.eu/neural_network_mnist.php

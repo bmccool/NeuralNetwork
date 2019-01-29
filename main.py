@@ -38,7 +38,7 @@ for epoch in range(epochs):
     nn.start_training()
     for i in range(len(mnist.trainImages)):
         #nn.train(mnist.trainImages[i], one_hot(mnist.trainLabels[i]))
-        nn.train_single(mnist.trainImages[i], one_hot(mnist.trainLabels[i]))
+        nn.train_one(mnist.trainImages[i], one_hot(mnist.trainLabels[i]))
         if (i % 10000 ) == 0:
             logger.info("Trained {} / {}".format(i, len(mnist.trainImages)))
             #nn.end_training()
