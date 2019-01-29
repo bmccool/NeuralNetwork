@@ -37,8 +37,10 @@ for epoch in range(epochs):
     logger.info("epoch {}".format(epoch))
     nn.start_training()
     for i in range(len(mnist.trainImages)):
-        #nn.train(mnist.trainImages[i], one_hot(mnist.trainLabels[i]))
-        nn.train_one(mnist.trainImages[i], one_hot(mnist.trainLabels[i]))
+        nn.train(mnist.trainImages[i], one_hot(mnist.trainLabels[i]))
+        #nn.end_training()
+        #nn.start_training()
+        # WORKS nn.train_one(mnist.trainImages[i], one_hot(mnist.trainLabels[i]))
         if (i % 10000 ) == 0:
             logger.info("Trained {} / {}".format(i, len(mnist.trainImages)))
             #nn.end_training()

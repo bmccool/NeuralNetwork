@@ -168,56 +168,32 @@ class Network:
             
     def train(self, input, target):
         # Folloing example on https://www.python-course.eu/neural_network_mnist.php
-        # First, Feed Forward
-        # The output (activation) of the network is the output of the last layer.
-        # The activation of each neuron in a layer is the weighted sum of the
-        #     activations of all neurons in the previous layer, plus a bias,
-        #     and the whole thing run through a "squishification" function to
-        #     distribute the result between [0-1].
-        #
+
         inputVector = np.array(input, ndmin=2)
         targetVector = np.array(target, ndmin=2).T
-
+        
+        # First, Feed Forward             
         outputVector1 = np.dot(self.weights[0], inputVector.T)
         outputHidden = squishify(outputVector1)
         outputVector2 = np.dot(self.weights[1], outputHidden)
         outputNetwork = squishify(outputVector2)
 
         # Backpropagate Output Layer
-        
-        # We need the error multiplied by the derivative of the activation function
-        # the derivative of the sigmoix(x) is x * (1 - x)
-        # so we want (target - output) output * (1 - output)
-        logger.debug("Target: {}".format(targetVector))
-        logger.debug("Output: {}".format(outputNetwork))
         outputErrors = (targetVector - outputNetwork)
-        # outputErrors is 10x10... what should it be?
-        logger.debug("Output Errors: {}".format(outputErrors))
-        # Update the weights
-        # We want weights = weights + learning rate * Error * Input
-        #logger.debug("np.dot(outputErrors.T, outputHidden).T = {}".format(dot))
-        #                                      This dot makes #100x10
         tmp = outputErrors * outputNetwork * (1.0 - outputNetwork)
-        #            (10,1) and (100,1)
-        tmp = np.dot(tmp, outputHidden)
-        del_weights = [np.zeros(np.array(w).shape) for w in self.weights]
-        del_weights[1] = self.learningRate * tmp
+        tmp = np.dot(tmp, outputHidden.T)
+        #del_weights = [np.zeros(np.array(w).shape) for w in self.weights]
+        #del_weights[1] = self.learningRate * tmp
+        self.weights[1] += self.learningRate * tmp
 
         # Backpropagate Hidden Layer
-        # Error for a hidden layer node is the weighted sum of all the connected nodes,
-        # together with the derivative of the activation function
-        # I.e. Error(Node[j]) = SUM[1-10](weights[1][j][1-10] * outputError[1-10]) * outputHidden * (1 - outputHidden)
-        hiddenErrors = np.dot(self.weights[1], outputErrors.T).T * outputHidden * (1.0 - outputHidden)
-        logger.debug("HiddenErrors {}".format(hiddenErrors))
-        # Update the weights
-        del_weights[0] = self.learningRate * np.dot(hiddenErrors.T, inputVector).T
+        hiddenErrors = np.dot(self.weights[1].T, outputErrors) * outputHidden * (1.0 - outputHidden)
+        tmp = hiddenErrors * outputHidden * (1.0 - outputHidden) # This was missing!
+        tmp = np.dot(tmp, inputVector)
+        #del_weights[0] = self.learningRate * tmp
+        self.weights[0] += self.learningRate * tmp
         
-        for i, weights in enumerate(del_weights):
-            for j, row in enumerate(weights):
-                logger.debug("Weights[{}][{}]: {}".format(i, j, row))
-        raise "STOP"
-        
-        self.accumulate_changes(del_weights, 0)
+        #self.accumulate_changes(del_weights, 0)
         
     def evaluate(self, images, labels):
         logger.info("Evaluating...")
