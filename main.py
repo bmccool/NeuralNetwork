@@ -38,7 +38,7 @@ mnist = Mnist("train-images.idx3-ubyte", "train-labels.idx1-ubyte",
 shuffledList = list(range(len(mnist.trainImages)))
 random.shuffle(shuffledList)
 
-epochs = 1
+epochs = 2 
  
 testPercent = []
 trainingPercent = []
@@ -60,4 +60,5 @@ for epoch in range(epochs):
                         shuffledList.index(i), len(mnist.trainImages), evaluate(mnist, nn_batch), evaluate(mnist, nn_single)))
             nn_batch.start_training()
 
+    logger.info("After Epoch {}, Batch: {}, Single: {}".format(epoch+1, evaluate(mnist, nn_batch), evaluate(mnist, nn_single)))
     nn_batch.end_training()

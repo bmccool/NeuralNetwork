@@ -35,24 +35,9 @@ def d_squishify(x):
 class Network:
     def __init__(self, shape, learningRate=0.1):
         self.shape = shape
-        logger.info("Creating network")
+        logger.debug("Creating network")
         self.learningRate = learningRate
         logger.debug("LearningRate: {}".format(self.learningRate))
-        #for index, layer in enumerate(shape):
-        #    self.layers.append([0] * layer)
-        #    logger.debug("Layer has {} nodes".format(layer))
-        #    if (index != 0):
-        #        # We only want weights for the layers other than the input layers
-        #        # TODO Is the bias index appropriate?? biases[0] applies to layer 1?
-        #        self.biases.append([0] * layer)
-        #        logger.debug("Added {} weights for layer {}".format(layer, index))
-        #    # Create weights for every layer but the input layer
-        #    # Each set of weights needs to be a matrix of size [in x out]
-        #    # Thay way we can use dot product of a layer and weights to get
-        #    # to the next layer.
-        #    if(i != len(shape) - 1):
-        #        self.weights.append([[0] * shape[i + 1] for each in range(shape[i])])
-        #        logger.debug("Weight matrix added, size {} by {}".format(shape[i + 1], shape[i]))
         self.layers, self.weights, self.biases = self.create_matricies(shape)
         self.del_weights = [np.zeros(np.array(w).shape) for w in self.weights]
         logger.debug("Total layers: {}".format(len(self.layers)))
@@ -71,11 +56,11 @@ class Network:
 
         for index, layer in enumerate(shape):
             layers.append([0] * layer)
-            #logger.debug("Layer has {} nodes".format(layer))
-            if (index != 0):
+            logger.debug("Layer has {} nodes".format(layer))
+            #if (index != 0):
                 # We only want weights for the layers other than the input layers
                 # TODO Is the bias index appropriate?? biases[0] applies to layer 1?
-                biases.append([0] * layer)
+                #biases.append([0] * layer)
                 #logger.debug("Added {} biases for layer {}".format(layer, index))
             # Create weights for every layer but the input layer
             # Each set of weights needs to be a matrix of size [in x out]
@@ -83,7 +68,7 @@ class Network:
             # to the next layer.
             if(index != len(shape) - 1):
                 weights.append(self.create_weight_matrix(shape[index], shape[index + 1]))
-                #logger.debug("Weight matrix added, size {} by {}".format(shape[index + 1], shape[index]))
+                logger.debug("Weight matrix added, size {} by {}".format(shape[index + 1], shape[index]))
         return layers, weights, biases
 
             
@@ -93,12 +78,11 @@ class Network:
         #   session, we apply the #TODO (average of these?) changes all at once
         self.training_samples = 0
         self.del_weights = [w * 0 for w in self.del_weights]
-        #logger.info("Starting training session")
         
-    def accumulate_changes(self, del_weights):
-        self.del_weights += del_weights
-        # TODO biases not used yet.... self.del_biases += del_biases
-        self.training_samples += 1
+#    def accumulate_changes(self, del_weights):
+#        self.del_weights += del_weights
+#        # TODO biases not used yet.... self.del_biases += del_biases
+#        self.training_samples += 1
         
     def end_training(self):
         # When a training set is complete, we want to apply the changes of
@@ -106,40 +90,7 @@ class Network:
         # TODO assume 100 size mini batch
         self.weights += np.array(self.del_weights) / 100
 
-    def train_single(self, input_vector, target_vector):
-        # Taken from example on https://www.python-course.eu/neural_network_mnist.php
-        # input_vector and target_vector can be tuple, list or ndarray
-                                       
-        no_of_layers = 3       
-        input_vector = np.array(input_vector, ndmin=2).T
-        layer_index = 0
-        # The output/input vectors of the various layers:
-        res_vectors = [input_vector]          
-        while layer_index < no_of_layers - 1:
-            in_vector = res_vectors[-1]
-
-            x = np.dot(self.weights[layer_index], in_vector)
-            out_vector = squishify(x)
-            res_vectors.append(out_vector)   
-            layer_index += 1
-        
-        layer_index = no_of_layers - 1
-        target_vector = np.array(target_vector, ndmin=2).T
-         # The input vectors to the various layers
-        output_errors = target_vector - out_vector  
-        while layer_index > 0:
-            out_vector = res_vectors[layer_index]
-            in_vector = res_vectors[layer_index-1]
-            tmp = output_errors * out_vector * (1.0 - out_vector)     
-            tmp = np.dot(tmp, in_vector.T)
-                       
-            self.weights[layer_index-1] += self.learningRate * tmp
-            
-            output_errors = np.dot(self.weights[layer_index-1].T, 
-                                   output_errors)
-            layer_index -= 1
- 
-    def train_one(self, input, target):
+    def train(self, input, target):
 
         inputVector = np.array(input, ndmin=2).T
         targetVector = np.array(target, ndmin=2).T
@@ -186,36 +137,9 @@ class Network:
         tmp = np.dot(tmp, inputVector)
         self.del_weights[0] += self.learningRate * tmp
             
-    def train(self, input, target):
-        # Folloing example on https://www.python-course.eu/neural_network_mnist.php
-
-        inputVector = np.array(input, ndmin=2)
-        targetVector = np.array(target, ndmin=2).T
-        
-        # First, Feed Forward             
-        outputVector1 = np.dot(self.weights[0], inputVector.T)
-        outputHidden = squishify(outputVector1)
-        outputVector2 = np.dot(self.weights[1], outputHidden)
-        outputNetwork = squishify(outputVector2)
-
-        # Backpropagate Output Layer
-        outputErrors = (targetVector - outputNetwork)
-        tmp = outputErrors * outputNetwork * (1.0 - outputNetwork)
-        tmp = np.dot(tmp, outputHidden.T)
-        self.weights[1] += self.learningRate * tmp
-
-        # Backpropagate Hidden Layer
-        hiddenErrors = np.dot(self.weights[1].T, outputErrors)
-        tmp = hiddenErrors * outputHidden * (1.0 - outputHidden) # This was missing!
-        tmp = np.dot(tmp, inputVector)
-        self.weights[0] += self.learningRate * tmp
-        
     def evaluate(self, images, labels):
-        #logger.info("Evaluating...")
         corrects, wrongs = 0, 0
         for i in range(len(images)):
-            #if (i % (len(images) / 10)) == 0:
-            #    logger.info("Evaluating {} / {}".format(i, len(images)))
             res = self.run(images[i])
             resMax = res.argmax()
             if resMax == labels[i]:
