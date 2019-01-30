@@ -54,6 +54,7 @@ class Network:
         #        self.weights.append([[0] * shape[i + 1] for each in range(shape[i])])
         #        logger.debug("Weight matrix added, size {} by {}".format(shape[i + 1], shape[i]))
         self.layers, self.weights, self.biases = self.create_matricies(shape)
+        self.del_weights = [np.zeros(np.array(w).shape) for w in self.weights]
         logger.debug("Total layers: {}".format(len(self.layers)))
         logger.debug("Total bias sets: {}".format(len(self.biases)))
         
@@ -91,12 +92,10 @@ class Network:
         #   wants to make to the weights and balances.  When we end the training
         #   session, we apply the #TODO (average of these?) changes all at once
         self.training_samples = 0
-        layers, self.del_weights, self.del_biases = self.create_matricies(self.shape)
-        self.del_weights = np.array(self.del_weights)
-        self.del_biases = np.array(self.del_biases)
+        self.del_weights = [w * 0 for w in self.del_weights]
         #logger.info("Starting training session")
         
-    def accumulate_changes(self, del_weights, del_biases):
+    def accumulate_changes(self, del_weights):
         self.del_weights += del_weights
         # TODO biases not used yet.... self.del_biases += del_biases
         self.training_samples += 1
@@ -104,13 +103,11 @@ class Network:
     def end_training(self):
         # When a training set is complete, we want to apply the changes of
         #   each training sample to the weights and biases of the network
-        self.del_weights = np.array(self.del_weights) / self.training_samples
-        # For some reason, biases is list instead of array, can't operate list and int
-        #self.del_biases = np.array(self.del_biases) / self.training_samples
-        self.weights += self.del_weights
-        #self.biases += self.del_biases
+        # TODO assume 100 size mini batch
+        self.weights += np.array(self.del_weights) / 100
 
     def train_single(self, input_vector, target_vector):
+        # Taken from example on https://www.python-course.eu/neural_network_mnist.php
         # input_vector and target_vector can be tuple, list or ndarray
                                        
         no_of_layers = 3       
@@ -165,6 +162,29 @@ class Network:
         tmp = np.dot(tmp, inputVector.T)
         self.weights[0] += self.learningRate * tmp
 
+    def train_batch(self, input, target):
+        # Folloing example on https://www.python-course.eu/neural_network_mnist.php
+
+        inputVector = np.array(input, ndmin=2)
+        targetVector = np.array(target, ndmin=2).T
+        
+        # First, Feed Forward             
+        outputVector1 = np.dot(self.weights[0], inputVector.T)
+        outputHidden = squishify(outputVector1)
+        outputVector2 = np.dot(self.weights[1], outputHidden)
+        outputNetwork = squishify(outputVector2)
+
+        # Backpropagate Output Layer
+        outputErrors = (targetVector - outputNetwork)
+        tmp = outputErrors * outputNetwork * (1.0 - outputNetwork)
+        tmp = np.dot(tmp, outputHidden.T)
+        self.del_weights[1] += self.learningRate * tmp
+
+        # Backpropagate Hidden Layer
+        hiddenErrors = np.dot(self.weights[1].T, outputErrors)
+        tmp = hiddenErrors * outputHidden * (1.0 - outputHidden) # This was missing!
+        tmp = np.dot(tmp, inputVector)
+        self.del_weights[0] += self.learningRate * tmp
             
     def train(self, input, target):
         # Folloing example on https://www.python-course.eu/neural_network_mnist.php
@@ -182,25 +202,20 @@ class Network:
         outputErrors = (targetVector - outputNetwork)
         tmp = outputErrors * outputNetwork * (1.0 - outputNetwork)
         tmp = np.dot(tmp, outputHidden.T)
-        #del_weights = [np.zeros(np.array(w).shape) for w in self.weights]
-        #del_weights[1] = self.learningRate * tmp
         self.weights[1] += self.learningRate * tmp
 
         # Backpropagate Hidden Layer
-        hiddenErrors = np.dot(self.weights[1].T, outputErrors) * outputHidden * (1.0 - outputHidden)
+        hiddenErrors = np.dot(self.weights[1].T, outputErrors)
         tmp = hiddenErrors * outputHidden * (1.0 - outputHidden) # This was missing!
         tmp = np.dot(tmp, inputVector)
-        #del_weights[0] = self.learningRate * tmp
         self.weights[0] += self.learningRate * tmp
         
-        #self.accumulate_changes(del_weights, 0)
-        
     def evaluate(self, images, labels):
-        logger.info("Evaluating...")
+        #logger.info("Evaluating...")
         corrects, wrongs = 0, 0
         for i in range(len(images)):
-            if (i % (len(images) / 10)) == 0:
-                logger.info("Evaluating {} / {}".format(i, len(images)))
+            #if (i % (len(images) / 10)) == 0:
+            #    logger.info("Evaluating {} / {}".format(i, len(images)))
             res = self.run(images[i])
             resMax = res.argmax()
             if resMax == labels[i]:

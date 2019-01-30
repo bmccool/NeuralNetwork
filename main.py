@@ -1,6 +1,7 @@
 from mnist import Mnist
 import numpy as np
 import logging
+import random
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -19,41 +20,44 @@ def one_hot(label, total=10):
     one_hot_label[one_hot_label == 0] = 0.01
     one_hot_label[one_hot_label == 1] = 0.99
     return one_hot_label
+  
+def evaluate(mnist_data, network):
+    #corrects, wrongs = network.evaluate(mnist.trainImages, mnist.trainLabels)
+    #logger.info("{:.2f}% Correct in training data".format((corrects / (corrects + wrongs)) * 100))
+    #trainingPercent.append("{:.2f}%".format((corrects / (corrects + wrongs)) * 100))
+
+    corrects, wrongs = network.evaluate(mnist.testImages, mnist.testLabels)
+    #logger.info("{:.2f}% Correct in test data".format((corrects / (corrects + wrongs)) * 100))
+
+    return "{:.2f}%".format((corrects / (corrects + wrongs)) * 100)
 
 
 logger.debug("START")
 mnist = Mnist("train-images.idx3-ubyte", "train-labels.idx1-ubyte",
                "t10k-images.idx3-ubyte",  "t10k-labels.idx1-ubyte")
+shuffledList = list(range(len(mnist.trainImages)))
+random.shuffle(shuffledList)
 
 epochs = 1
+ 
 testPercent = []
 trainingPercent = []
 
 from network import Network
 
-nn = Network([28 * 28, 100, 10], 0.2)
+nn_batch = Network([28 * 28, 100, 10], 0.2)
+nn_single = Network([28 * 28, 100, 10], 0.2)
 
 for epoch in range(epochs):
     logger.info("epoch {}".format(epoch))
-    nn.start_training()
-    for i in range(len(mnist.trainImages)):
-        nn.train(mnist.trainImages[i], one_hot(mnist.trainLabels[i]))
-        #nn.end_training()
-        #nn.start_training()
-        # WORKS nn.train_one(mnist.trainImages[i], one_hot(mnist.trainLabels[i]))
-        if (i % 10000 ) == 0:
-            logger.info("Trained {} / {}".format(i, len(mnist.trainImages)))
-            #nn.end_training()
-            #raise "STOP"
-            #nn.start_training()
+    nn_batch.start_training()
+    for i in shuffledList:
+        nn_batch.train_batch(mnist.trainImages[i], one_hot(mnist.trainLabels[i]))
+        nn_single.train(mnist.trainImages[i], one_hot(mnist.trainLabels[i]))
+        if (shuffledList.index(i) % 100 ) == 0:
+            nn_batch.end_training()
+            logger.info("Epoch: {}, {} / {}, Batch: {}, Single: {}".format(epoch+1,
+                        shuffledList.index(i), len(mnist.trainImages), evaluate(mnist, nn_batch), evaluate(mnist, nn_single)))
+            nn_batch.start_training()
 
-    corrects, wrongs = nn.evaluate(mnist.trainImages, mnist.trainLabels)
-    logger.info("{:.2f}% Correct in training data".format((corrects / (corrects + wrongs)) * 100))
-    trainingPercent.append("{:.2f}%".format((corrects / (corrects + wrongs)) * 100))
-
-    corrects, wrongs = nn.evaluate(mnist.testImages, mnist.testLabels)
-    logger.info("{:.2f}% Correct in test data".format((corrects / (corrects + wrongs)) * 100))
-    testPercent.append("{:.2f}%".format((corrects / (corrects + wrongs)) * 100))
-    
-logger.info("Training Percent: {}".format(trainingPercent))
-logger.info("Test Percent: {}".format(testPercent))
+    nn_batch.end_training()
