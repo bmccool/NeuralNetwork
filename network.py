@@ -79,19 +79,19 @@ class Network:
         self.training_samples = 0
         self.del_weights = [w * 0 for w in self.del_weights]
         
-#    def accumulate_changes(self, del_weights):
-#        self.del_weights += del_weights
-#        # TODO biases not used yet.... self.del_biases += del_biases
-#        self.training_samples += 1
+    def accumulate_changes(self, del_weights):
+        for i in range(len(self.del_weights)):
+            self.del_weights[i] += del_weights[i]
+        # TODO biases not used yet.... self.del_biases += del_biases
+        self.training_samples += 1
         
     def end_training(self):
         # When a training set is complete, we want to apply the changes of
         #   each training sample to the weights and biases of the network
-        # TODO assume 100 size mini batch
-        self.weights += np.array(self.del_weights) / 100
+        self.weights += np.array(self.del_weights) / self.training_samples 
 
     def train(self, input, target):
-
+        # Create np arrays of input and target output
         inputVector = np.array(input, ndmin=2).T
         targetVector = np.array(target, ndmin=2).T
 
@@ -114,8 +114,13 @@ class Network:
         self.weights[0] += self.learningRate * tmp
 
     def train_batch(self, input, target):
-        # Folloing example on https://www.python-course.eu/neural_network_mnist.php
+        # Following example on https://www.python-course.eu/neural_network_mnist.php
 
+        # Create weight matrix delta for this training sample
+        # Delta for each sample is accumulated for the entire batch
+        del_weights = [w * 0 for w in self.del_weights]
+
+        # Create np arrays of input and target output
         inputVector = np.array(input, ndmin=2)
         targetVector = np.array(target, ndmin=2).T
         
@@ -129,13 +134,15 @@ class Network:
         outputErrors = (targetVector - outputNetwork)
         tmp = outputErrors * outputNetwork * (1.0 - outputNetwork)
         tmp = np.dot(tmp, outputHidden.T)
-        self.del_weights[1] += self.learningRate * tmp
+        del_weights[1] += self.learningRate * tmp
 
         # Backpropagate Hidden Layer
         hiddenErrors = np.dot(self.weights[1].T, outputErrors)
         tmp = hiddenErrors * outputHidden * (1.0 - outputHidden) # This was missing!
         tmp = np.dot(tmp, inputVector)
-        self.del_weights[0] += self.learningRate * tmp
+        del_weights[0] += self.learningRate * tmp
+
+        self.accumulate_changes(del_weights)
             
     def evaluate(self, images, labels):
         corrects, wrongs = 0, 0
