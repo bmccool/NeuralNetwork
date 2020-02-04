@@ -111,36 +111,46 @@ criterion = nn.MSELoss()
 logger.info("Using this torch net:")
 logger.info(nn_torch)
 
+batch_size = 100
+batch_images_list = []
+batch_labels_list = []
+
 for epoch in range(epochs):
     logger.info("epoch {}".format(epoch))
     #nn_batch.start_training()
     for i in shuffledList:
-        # Train the network for this image: mnist.trainImages[i]
-        # Output should be one_hot(mnist.trainLabels[i])
-        target = torch.from_numpy(one_hot(mnist.trainLabels[i]))
-        target = target.view(1, -1) # BAM: Do I need to reshape this here?
-        target = target.type(torch.FloatTensor)
+        # gather all the samples in this batch
+        batch_images_list.append(torch.tensor(mnist.trainImages[i]).unsqueeze(0))
+        label = torch.from_numpy(one_hot(mnist.trainLabels[i]))
+        label = label.view(1, -1) # why is this here?
+        #label = label.unsqueeze(0)
+        label = label.type(torch.FloatTensor)
+        batch_labels_list.append(label)
 
-        # Zero the gradient buffers
-        optimizer.zero_grad()
+        if ((shuffledList.index(i) % 100)  == 0) and (shuffledList.index(i) != 0):
+            # Batch is gathered!
+            # Train the network for this batch
 
-        # Feed forward
-        output = nn_torch(torch.tensor(mnist.trainImages[i]).unsqueeze(0).unsqueeze(0))
-        # Calculate Loss
-        loss = criterion(output, target.unsqueeze(0))
-        
-        # Backpropagate
-        loss.backward()
- 
-        # Update parameters
-        optimizer.step()
-        if (shuffledList.index(i) % 100 ) == 0:
-            # Evaluate after every 100 training sets (one image in a set)
+            # Zero the gradient buffers
+            optimizer.zero_grad()
+
+            # Feed forward
+            batch_images = torch.stack([*batch_images_list])
+            output = nn_torch(batch_images)
+            batch_images_list = []
+
+            # Calculate Loss
+            batch_labels = torch.stack([*batch_labels_list])
+            loss = criterion(output, batch_labels)
+            batch_labels_list = []
+            
+            # Backpropagate
+            loss.backward()
+     
+            # Update parameters
+            optimizer.step()
+
+            # Evaluate after every batch
             logger.info("Epoch: {}, {} / {}, torchNet: {}".format(epoch+1, shuffledList.index(i), len(mnist.trainImages), torch_eval(nn_torch)))
-            #nn_batch.end_training()
-            #logger.info("Epoch: {}, {} / {}, Batch: {}, Single: {}".format(epoch+1,
-            #            shuffledList.index(i), len(mnist.trainImages), evaluate(mnist, nn_batch), evaluate(mnist, nn_single)))
-            #nn_batch.start_training()
 
     logger.info("After Epoch {}, torchNet: {}".format(epoch+1, torch_eval(nn_torch)))
-    #nn_batch.end_training()
